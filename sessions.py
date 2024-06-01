@@ -5,7 +5,6 @@ from models import User
 
 class Session:
     instance = None
-    user: User = None
 
     def __new__(cls, *args, **kwargs):
         if not cls.instance:
@@ -19,7 +18,11 @@ class Session:
 
     def add_session(self, user: User):
         self.session = user
-        Session.user = user
 
     def check_session(self):
         return self.session
+
+    def get_user_role(self):
+        if self.session:
+            return self.session.role
+        return None

@@ -1,6 +1,8 @@
 import psycopg2
 import os
 from dotenv import load_dotenv
+import utils
+
 load_dotenv()
 
 conn = psycopg2.connect(database=os.getenv('database'),
@@ -18,7 +20,7 @@ create_users_table = """create table if not exists users(
     password varchar(255) not null ,
     role varchar(20) not null ,
     status varchar(30) not null ,
-    login_try_count int not null 
+    login_try_count int not null
 );
 """
 
@@ -31,20 +33,29 @@ create_todos_table = """create table if not exists todos(
 """
 
 
+def commit(func):
+    def wrapper(*args, **kwargs):
+        result = func(*args, **kwargs)
+        conn.commit()
+        return result
+
+    return wrapper
+
+
 def create_table():
     cur.execute(create_users_table)
     cur.execute(create_todos_table)
     conn.commit()
 
 
+@commit
 def migrate():
     insert_into_users = """
-    insert into users (username, password, role, status,login_try_count) 
-    values ('admin','123','SUPERADMIN','ACTIVE',0);
+    insert into users (username, password, role, status,login_try_count)
+    values (%s, %s, %s, %s, %s);
 
     """
-    cur.execute(insert_into_users)
-    conn.commit()
+    cur.execute(insert_into_users, ('admin', utils.hash_password('123'), 'SUPERADMIN', 'ACTIVE', 0))
 
 
 def init():
